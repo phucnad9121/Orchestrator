@@ -1,0 +1,140 @@
+{
+  "$schema": "./agent.config.schema.json",
+  "provider": {
+    "type": "openai",
+    "baseUrl": "https://api.deepseek.com/v1",
+    "model": "deepseek-chat",
+    "apiKeyEnv": "LLM_API_KEY",
+    "temperature": 0.2,
+    "maxTokens": 4096,
+    "timeoutMs": 120000
+  },
+  "limits": {
+    "maxStepsPerTask": 24,
+    "maxTaskAttempts": 2,
+    "maxFixCycles": 3,
+    "taskTimeoutMs": 1200000,
+    "maxParallel": 1,
+    "maxToolOutputChars": 12000,
+    "maxFileWriteBytes": 400000,
+    "maxContextChars": 14000
+  },
+  "approval": {
+    "mode": "gate"
+  },
+  "workspace": {
+    "allowedRoots": ["."],
+    "protectedPaths": [
+      ".env",
+      ".env.local",
+      "**/.env",
+      "**/.env.local",
+      "**/.env.*.local",
+      "**/*.pem",
+      "**/*.key",
+      "**/application-secret*",
+      "docs/Token.md",
+      ".git/**",
+      ".github/**",
+      ".opencode/**",
+      ".claude/**",
+      ".specify/**",
+      "node_modules/**",
+      "target/**",
+      "dist/**",
+      "orchestrator/runs",
+      "orchestrator/runs/**"
+    ],
+    "excludeDirs": [
+      "node_modules",
+      "target",
+      "dist",
+      "coverage",
+      ".git",
+      ".idea",
+      ".vscode",
+      ".vite"
+    ]
+  },
+  "tools": {
+    "shellAllowlist": [
+      "git",
+      "node",
+      "npm",
+      "npx",
+      "mvn",
+      "mvnw",
+      "mvnw.cmd",
+      "java",
+      "javac",
+      "docker",
+      "docker-compose",
+      "python",
+      "python3",
+      "pip",
+      "pytest",
+      "rg",
+      "ls",
+      "dir",
+      "cat",
+      "type",
+      "head",
+      "tail",
+      "findstr"
+    ],
+    "denyPatterns": [
+      "\\bgit\\s+push\\b",
+      "\\bgit\\b.*\\b(push|reset\\s+--hard|clean\\s+-[a-z]*f)\\b",
+      "\\bgit\\s+reset\\s+--hard\\b",
+      "\\bgit\\s+clean\\s+-[a-z]*f",
+      "\\bgit\\s+branch\\s+-D\\b",
+      "\\bgit\\s+remote\\s+remove\\b",
+      "\\bgit\\s+config\\s+--global\\b",
+      "\\bnode\\s+(-e|--eval)\\b",
+      "\\bpython3?\\s+-c\\b",
+      "\\b(ruby|perl|php)\\s+-e\\b",
+      "\\brm\\s+-rf\\s+[/~.]",
+      "\\brm\\s+-fr\\s+[/~.]",
+      "\\bdel\\s+/[fs]\\b",
+      "\\bRemove-Item\\b",
+      "\\bformat\\s+[a-zA-Z]:",
+      "\\bshutdown\\b",
+      "\\breboot\\b",
+      "\\bmvn\\b.*\\bdeploy\\b",
+      "\\bmvnw(\\.cmd)?\\b.*\\bdeploy\\b",
+      "\\bnpm\\s+publish\\b",
+      "\\bdocker\\s+(rm|rmi|system\\s+prune)\\b",
+      "\\bdrop\\s+(table|database)\\b",
+      "\\btruncate\\s+table\\b",
+      "\\bcurl\\b[^|]*\\|\\s*(sh|bash)\\b",
+      "\\bInvoke-WebRequest\\b.*\\|\\s*iex\\b"
+    ],
+    "approvalPatterns": [
+      "\\bgit\\s+(add|commit|checkout|switch|merge|rebase|stash|restore|rm|mv)\\b",
+      "\\bgit\\s+config\\b",
+      "\\bnpm\\s+(install|ci|uninstall|exec)\\b",
+      "\\bmvnw?(\\.cmd)?\\b.*\\binstall\\b",
+      "\\bpip\\s+install\\b",
+      "\\bnpx\\b",
+      "\\bdocker\\b"
+    ]
+  },
+  "tests": {
+    "backend": {
+      "cwd": "backend",
+      "command": "\"{mvnw}\" -q test",
+      "timeoutMs": 900000,
+      "description": "JUnit 5 + Mockito (Spring Boot)"
+    },
+    "frontend": {
+      "cwd": "frontend",
+      "command": "npm run build",
+      "timeoutMs": 600000,
+      "description": "Vite production build"
+    }
+  },
+  "reporter": {
+    "language": "vi",
+    "aiSummary": false
+  }
+}

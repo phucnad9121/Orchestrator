@@ -1,0 +1,29 @@
+{
+  "name": "@techzone/agent-team",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hệ thống 4 AI Agent phối hợp phát triển phần mềm dưới sự điều phối trung tâm",
+  "bin": {
+    "agent-team": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx src/cli.ts",
+    "agent": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "doctor": "tsx src/cli.ts doctor",
+    "demo": "npm run build && node dist/demo.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
