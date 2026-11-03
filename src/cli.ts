@@ -34,6 +34,7 @@ import { truncate } from "./util/text.js";
 import { pingLLM } from "./llm/openai.js";
 import { getTelegramConfigStatus, notifyTelegramRunStatus } from "./core/telegram.js";
 import { startTelegramControlBot } from "./core/telegram-bot.js";
+import { startMcpServer } from "./mcp.js";
 
 const BOOLEAN_FLAGS = new Set([
   "mock",
@@ -113,6 +114,9 @@ async function main(): Promise<void> {
         break;
       case "telegram":
         await commandTelegram(args);
+        break;
+      case "mcp":
+        await startMcpServer();
         break;
       case "version":
         console.log("agent-team 0.1.0");
@@ -661,6 +665,7 @@ LỆNH CHÍNH
   serve   [runId]       Web dashboard realtime (SSE) + duyệt approval
   doctor                Kiểm tra môi trường (--online để ping LLM)
   telegram              Bật bot Telegram để nhận lệnh điều khiển từ chat riêng
+  mcp                   Chạy MCP server qua stdio cho client MCP
   help                  Trợ giúp
 
 TUỲ CHỌN

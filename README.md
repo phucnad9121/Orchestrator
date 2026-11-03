@@ -304,6 +304,25 @@ API local (không có auth, mặc định chỉ bind `127.0.0.1`):
 
 ---
 
+### 4.8. Kết nối qua MCP để sửa repo khác
+
+Orchestrator có MCP server chạy qua stdio. Client MCP khởi chạy server này trên cùng máy; `repo_path` là đường dẫn local tới repository cần sửa. Trong repo orchestrator, build trước rồi khai báo server trong cấu hình MCP của client:
+
+```json
+{
+  "mcpServers": {
+    "agent-team": {
+      "command": "node",
+      "args": ["D:/Orchestrator/dist/cli.js", "mcp"]
+    }
+  }
+}
+```
+
+MCP cung cấp `run_agent`, `get_run_status`, `list_pending_approvals`, `resolve_approval` và `resume_run`. Ví dụ `run_agent` nhận `repo_path: "D:/Projects/my-app"` cùng `request: "Sửa lỗi ..."`. Approval gate hiện có vẫn được áp dụng; nếu cần duyệt, xử lý approval qua MCP rồi gọi `resume_run`. Cấu hình LLM tiếp tục dùng `.env` hiện tại của orchestrator.
+
+Server dùng quyền filesystem và tiến trình của user chạy MCP client. Chỉ cấu hình client đáng tin cậy; MCP stdio không mở cổng mạng hay cung cấp xác thực riêng.
+
 ## 5. CLI reference
 
 ```text
