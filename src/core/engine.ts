@@ -500,13 +500,16 @@ export class Engine {
     }
 
     const issues = [...result.issues];
-    const failedTests = result.testsRun.filter((test) => !test.passed);
-    const requiredSuites = Object.keys(this.config.tests);
+    const changedFiles = this.implementationFilesChanged();
+    const requiredSuites = selectVerificationSuites(changedFiles, this.config.tests);
+    const failedTests = result.testsRun.filter(
+      (test) => requiredSuites.includes(test.suite) && !test.passed,
+    );
     const executedSuites = new Set(result.testsRun.map((test) => test.suite));
     const missingSuites = requiredSuites.length === 0
       ? ["(chưa cấu hình suite)"]
       : requiredSuites.filter((suite) => !executedSuites.has(suite));
-    const noEvidence = this.state.mode !== "mock" && missingSuites.length > 0;
+    const noEvidence = this.state.mode !== "mock" && requiredSuites.length > 0 && missingSuites.length > 0;
     if (noEvidence) {
       const issue: Issue = {
         severity: "high",
@@ -558,11 +561,12 @@ export class Engine {
         ...(debugTaskId ? [debugTaskId] : []),
       ]),
     ];
-    const changed = [
-      ...new Set(implementationTasks.flatMap((task) => task.result?.filesChanged ?? [])),
-    ];
+    const changed = this.implementationFilesChanged();
+    const suites = selectVerificationSuites(changed, this.config.tests);
     const acceptance = [
-      "Chạy toàn bộ test/build đã cấu hình và ghi lại kết quả thật",
+      suites.length > 0
+        ? `Chạy đúng test suite liên quan (${suites.join(", ")}) và ghi lại kết quả thật`
+        : "Không có test suite áp dụng trực tiếp; kiểm tra diff và acceptance criteria, không chạy suite không liên quan",
       "Đối chiếu thay đổi với acceptance criteria của yêu cầu",
       "Mọi issue critical/high phải có repro và vị trí cụ thể",
     ];
@@ -573,10 +577,12 @@ export class Engine {
       description: [
         `Kiểm thử toàn bộ thay đổi cho yêu cầu: ${truncate(this.state.request, 1200)}`,
         "",
-        "Chạy test_run suite \"all\" (backend + frontend). Đọc git_diff, đối chiếu acceptance của từng task implementation.",
+        suites.length > 0
+          ? `Chạy test_run cho các suite liên quan: ${suites.join(", ")}. Không chạy suite ngoài danh sách này. Đọc git_diff và đối chiếu acceptance.`
+          : "Không có suite nào áp dụng trực tiếp vào file thay đổi. Đọc git_diff và đối chiếu acceptance; chỉ chạy test nếu phát hiện rủi ro cần xác minh.",
         "Tìm regression ở các luồng liên quan: phân quyền, validation, trạng thái đơn, tồn kho, thanh toán.",
         "Không sửa code production. Issue phải có severity, file/line, repro, expected/actual.",
-        changed.length > 0 ? `File đã thay đổi: ${changed.slice(0, 40).join(", ")}` : "Chưa có file thay đổi được báo cáo.",
+        changed.length > 0 ? `File đã thay đổi: ${changed.slice(0, 40).join(", ")}` : "Chưa xác định được file thay đổi; khi đó cần chạy toàn bộ suite đã cấu hình.",
         round > 1 ? "Đây là vòng kiểm tra lại sau khi Debug Agent sửa lỗi." : "",
       ]
         .filter(Boolean)
@@ -585,6 +591,16 @@ export class Engine {
       dependsOn,
       round,
     });
+  }
+
+  private implementationFilesChanged(): string[] {
+    return [
+      ...new Set(
+        this.state.tasks
+          .filter((task) => task.generatedBy === "planner")
+          .flatMap((task) => task.result?.filesChanged ?? []),
+      ),
+    ];
   }
 
   private createDebugTask(round: number, verifyTask: TaskState, issues: Issue[]): TaskState {
@@ -736,6 +752,28 @@ export class Engine {
 
 function isTerminal(status: TaskState["status"]): boolean {
   return ["done", "failed", "blocked", "skipped"].includes(status);
+}
+
+function selectVerificationSuites(
+  changedFiles: string[],
+  configured: AgentConfig["tests"],
+): string[] {
+  const allSuites = Object.keys(configured);
+  if (changedFiles.length === 0 || allSuites.length === 0) return allSuites;
+
+  const normalized = changedFiles.map((file) => toPosix(file).replace(/^\.\//, "").toLowerCase());
+  const docsOnly = normalized.every(
+    (file) => /^(docs\/.*|[^/]+)\.(md|mdx|txt)$/i.test(file),
+  );
+  if (docsOnly) return [];
+
+  const matching = allSuites.filter((suite) => {
+    const cwd = toPosix(configured[suite]?.cwd ?? ".").replace(/^\.\//, "").replace(/\/$/, "");
+    if (!cwd || cwd === ".") return true;
+    return normalized.some((file) => file === cwd || file.startsWith(`${cwd.toLowerCase()}/`));
+  });
+  // Unknown/root-level code or shared config can affect every layer.
+  return matching.length > 0 ? matching : allSuites;
 }
 
 function isBlockingIssue(issue: Issue): boolean {

@@ -112,7 +112,7 @@ QUY TRÌNH GỢI Ý:
   testing: `BẠN LÀ TESTING AGENT — chịu trách nhiệm kiểm thử độc lập, không phải người viết code chính.
 
 NHIỆM VỤ:
-- Chạy toàn bộ kiểm thử đã cấu hình bằng test_run suite "all" (backend + frontend).
+- Chạy các suite được giao trong mô tả task bằng test_run; chỉ chạy suite "all" khi task yêu cầu rõ hoặc không xác định được phạm vi thay đổi.
 - Đọc diff của các task implementation (git_diff) và đối chiếu với acceptance criteria của yêu cầu.
 - Kiểm tra regression: luồng liên quan, phân quyền, trạng thái đơn, tồn kho, thanh toán, validation.
 - Tìm lỗi thật, tái hiện được; không suy đoán vô căn cứ.
@@ -122,7 +122,7 @@ NHIỆM VỤ:
 - Có thể dùng team_send báo backend/frontend/debug về lỗi nghiêm trọng.
 
 ĐIỀU KIỆN DONE:
-- Tất cả suite bắt buộc chạy và PASS; không còn issue critical/high.
+- Tất cả suite liên quan được giao phải PASS; không còn issue critical/high.
 - Nếu có issue medium/low, vẫn có thể done nhưng phải liệt kê rõ trong issues và nextSteps.
 - testsRun phải chứa kết quả thật của từng suite đã chạy.`,
 
