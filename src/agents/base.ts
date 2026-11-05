@@ -92,7 +92,10 @@ export class BaseAgent {
       const timer = setTimeout(() => controller.abort(), remaining);
       let response;
       try {
-        this.options.logger.debug("agent.step", `[${this.options.role}] ${task.id} · bước ${step}`);
+        this.options.logger.info(
+          "agent.step",
+          `[${this.options.role}] ${task.id} · Lượt ${step}/${this.options.config.limits.maxStepsPerTask}: đang phân tích và chọn bước tiếp theo.`,
+        );
         response = await this.options.llm.chat({
           messages,
           tools: toolSchemas,
@@ -206,7 +209,7 @@ export class BaseAgent {
     const name = call.function.name;
     this.options.logger.info(
       "agent.tool",
-      `[${this.options.role}] ${task.id} → ${name}(${summarizeArguments(call.function.arguments)})`,
+      `[${this.options.role}] ${task.id} · Đang ${describeTool(name)}: ${summarizeArguments(call.function.arguments)}`,
     );
 
     let output;
@@ -420,6 +423,23 @@ export class BaseAgent {
     const text = redactSecrets(JSON.stringify(payload));
     fs.appendFileSync(file, `${text}\n`);
   }
+}
+
+function describeTool(name: string): string {
+  const labels: Record<string, string> = {
+    fs_read: "đọc tệp",
+    fs_list: "liệt kê tệp",
+    fs_search: "tìm trong mã nguồn",
+    fs_write: "ghi tệp",
+    fs_edit: "chỉnh sửa tệp",
+    shell_run: "chạy lệnh",
+    test_run: "chạy kiểm thử",
+    git_status: "kiểm tra trạng thái Git",
+    git_diff: "xem thay đổi mã nguồn",
+    team_send: "gửi thông tin cho agent khác",
+    team_read: "đọc tin nhắn từ agent khác",
+  };
+  return labels[name] ?? `dùng công cụ ${name}`;
 }
 
 function summarizeArguments(raw: string): string {
